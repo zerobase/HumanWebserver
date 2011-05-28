@@ -81,7 +81,7 @@ class HumanWebserver:
 		self.socket.close()		
 	
 	def start(self):
-		print ("Listening...")
+		print ("World's Fastest Web Server HumanWebserver started")
 		self.socket.listen(1)
 				
 		try:

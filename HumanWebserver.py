@@ -3,7 +3,7 @@ import socket, sys, subprocess, os, select, socket, readline, time
 class HumanWebserver:
 	responseFile = os.getcwd() + "/response.txt"
 	responseHttp = "HTTP/1.1 %d %s\r\nContent-Type: text/html\r\n\r\n\r\n"
-		
+
 	statusCodes = {
 		100: "Continue",
 		101: "Switching Protocols",
@@ -59,16 +59,31 @@ class HumanWebserver:
 		508: "Bandwith Limit Exceeded",
 		510: "Not Extended"
 	}
+<<<<<<< HEAD
 	
 	def __init__(self):		
+=======
+
+	def __init__(self, port):
+		try:
+			port = int(port)
+		except:
+			print (port, " ist kein gueltige Portnummer")
+			sys.exit(1)
+
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socket.bind(('', port))
+
+>>>>>>> 21332bcc1994007def05320d907010441fe25790
 		completer = self.Completer(self.statusCodes)
 		readline.parse_and_bind("tab: complete")
 		readline.set_completer(completer.complete)
-		
+
 	def __del__(self):
 		self.stop()
-	
+
 	def stop(self):
+<<<<<<< HEAD
 		if self.socket != None:
 			self.socket.close()		
 	
@@ -82,12 +97,18 @@ class HumanWebserver:
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.bind(('', port))
 		
+=======
+		self.socket.close()
+
+	def start(self):
+>>>>>>> 21332bcc1994007def05320d907010441fe25790
 		print ("World's Fastest Web Server HumanWebserver started")
 		self.socket.listen(1)
-				
+
 		try:
 			while 1:
 				conn, addr = self.socket.accept()
+<<<<<<< HEAD
 				cfile = conn.makefile("rw", 0)
 				
 				#print ("Verbindung von Host: ", addr[0], " port ", addr[1])
@@ -95,6 +116,14 @@ class HumanWebserver:
 				data = self.recvall(conn)
 				print (bytes.decode(data))
 								
+=======
+				print ("Verbindung von Host: ", addr[0], " port ", addr[1])
+				data = conn.recv(4096)
+				if not data: break
+
+				print (bytes.decode(data))
+
+>>>>>>> 21332bcc1994007def05320d907010441fe25790
 				while True:
 					status = raw_input("Respond with? ")
 					if status == "":
@@ -102,11 +131,12 @@ class HumanWebserver:
 						break;
 					try:
 						status = int(status)
-				
+
 						if self.statusCodes.has_key(status):
 							break;
 					except:
 						pass
+<<<<<<< HEAD
 						
 					print "%s ist kein gueltiger Status"%status					
 				
@@ -114,12 +144,30 @@ class HumanWebserver:
 				cfile.close()
 				conn.close()
 				
+=======
+					finally:
+						print "%s ist kein gueltiger Status"%status
+
+				f = open(self.responseFile, 'w')
+				f.write(self.responseHttp%(status, self.statusCodes[status]))
+				f.close()
+
+				p = subprocess.Popen("vim %s +" % self.responseFile, bufsize=2048, shell=True)
+				p.wait()
+
+				f = open(self.responseFile, 'r')
+				conn.send(f.read())	
+				conn.close()
+				f.close()
+
+>>>>>>> 21332bcc1994007def05320d907010441fe25790
 				os.remove(self.responseFile)
-	
+
 		except KeyboardInterrupt:
 			print("\nShutting down ...")
 		finally:
 			self.stop()
+<<<<<<< HEAD
 	
 	def content(self, path, default = ""):
 		f = open(path, 'w')
@@ -170,28 +218,29 @@ class HumanWebserver:
 		result=''.join(total_data)
 		return result
 	
+=======
+
+
+>>>>>>> 21332bcc1994007def05320d907010441fe25790
 	class Completer:
 		def __init__(self, dictionary):
 			self.dictionary = dictionary
 			self.prefix = None
-		    
-		def complete(self, prefix, index):				
-		    if prefix != self.prefix:
-		        # we have a new prefix!
-		        # find all words that start with this prefix
-		        self.matching_words = [
-		            	(k, v) for (k, v) in self.dictionary.items() if str(k).startswith(prefix)
-		            ]
-		        self.prefix = prefix
-		        
-		    try:
-		    	if (len(self.matching_words) > 1):
-		        	return "%s %s"%(str(self.matching_words[index][0]), self.matching_words[index][1])
-		        else:
-		        	return str(self.matching_words[index][0])
-		    except IndexError:
+
+		def complete(self, prefix, index):
+			if prefix != self.prefix:
+				self.matching_words = [(k, v) for (k, v) in self.dictionary.items() if str(k).startswith(prefix)]
+				self.prefix = prefix
+
+			try:
+				if (len(self.matching_words) > 1):
+					return "%s %s"%(str(self.matching_words[index][0]), self.matching_words[index][1])
+				else:
+					return str(self.matching_words[index][0])
+			except IndexError:
 				return None
 
+<<<<<<< HEAD
 
 
 
@@ -212,3 +261,10 @@ class HumanWebserver:
 
 
 
+=======
+try:
+	humanServer = HumanWebserver(2000)
+	humanServer.start()
+except KeyboardInterrupt:
+	del humanServer
+>>>>>>> 21332bcc1994007def05320d907010441fe25790

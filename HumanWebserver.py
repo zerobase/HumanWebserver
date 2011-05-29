@@ -1,4 +1,4 @@
-import socket, sys, subprocess, os, select, socket, readline
+import socket, sys, subprocess, os, select, socket, readline, time
 
 class HumanWebserver:
 	responseFile = os.getcwd() + "/response.txt"
@@ -60,7 +60,19 @@ class HumanWebserver:
 		510: "Not Extended"
 	}
 	
-	def __init__(self, port):
+	def __init__(self):		
+		completer = self.Completer(self.statusCodes)
+		readline.parse_and_bind("tab: complete")
+		readline.set_completer(completer.complete)
+		
+	def __del__(self):
+		self.stop()
+	
+	def stop(self):
+		if self.socket != None:
+			self.socket.close()		
+	
+	def start(self, port):
 		try:
 			port = int(port)
 		except:
@@ -70,31 +82,24 @@ class HumanWebserver:
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.bind(('', port))
 		
-		completer = self.Completer(self.statusCodes)
-		readline.parse_and_bind("tab: complete")
-		readline.set_completer(completer.complete)
-		
-	def __del__(self):
-		self.stop()
-	
-	def stop(self):
-		self.socket.close()		
-	
-	def start(self):
 		print ("World's Fastest Web Server HumanWebserver started")
 		self.socket.listen(1)
 				
 		try:
 			while 1:
 				conn, addr = self.socket.accept()
-				print ("Verbindung von Host: ", addr[0], " port ", addr[1])
-				data = conn.recv(4096)
-				if not data: break
-	
-				print (bytes.decode(data))	
+				cfile = conn.makefile("rw", 0)
 				
+				#print ("Verbindung von Host: ", addr[0], " port ", addr[1])
+				
+				data = self.recvall(conn)
+				print (bytes.decode(data))
+								
 				while True:
 					status = raw_input("Respond with? ")
+					if status == "":
+						status = 200
+						break;
 					try:
 						status = int(status)
 				
@@ -102,20 +107,12 @@ class HumanWebserver:
 							break;
 					except:
 						pass
-					finally:
-						print "%s ist kein gueltiger Status"%status					
+						
+					print "%s ist kein gueltiger Status"%status					
 				
-				f = open(self.responseFile, 'w')
-				f.write(self.responseHttp%(status, self.statusCodes[status]))
-				f.close()
-		
-				p = subprocess.Popen("vim %s +" % self.responseFile, bufsize=2048, shell=True)
-				p.wait()
-		
-				f = open(self.responseFile, 'r')				
-				conn.send(f.read())	
+				cfile.write(self.content(self.responseFile, self.responseHttp%(status, self.statusCodes[status])))	
+				cfile.close()
 				conn.close()
-				f.close()
 				
 				os.remove(self.responseFile)
 	
@@ -123,7 +120,55 @@ class HumanWebserver:
 			print("\nShutting down ...")
 		finally:
 			self.stop()
+	
+	def content(self, path, default = ""):
+		f = open(path, 'w')
+		f.write(default)
+		f.close()
+
+		p = subprocess.Popen("vim %s +" % path, bufsize=2048, shell=True)
+		p.wait()
+
+		f = open(path, 'r')
+		
+		content = f.read()
+		f.close()
+		
+		return content
+	
+	def recvall(self, the_socket, timeout=''):
+		#setup to use non-blocking sockets
+		#if no data arrives it assumes transaction is done
+		#recv() returns a string
+		the_socket.setblocking(0)
+		total_data=[];data=''
+		begin=time.time()
+		
+		if not timeout:
+			timeout=1
 			
+		while 1:
+			#if you got some data, then break after wait sec
+			if total_data and time.time()-begin>timeout:
+				break
+			#if you got no data at all, wait a little longer
+			elif time.time()-begin>timeout*2:
+				break
+			wait=0
+			try:
+				data=the_socket.recv(4096)
+				if data:
+					total_data.append(data)
+					begin=time.time()
+					data='';wait=0
+				else:
+					time.sleep(0.1)
+			except:
+				pass
+			#When a recv returns 0 bytes, other side has closed
+		
+		result=''.join(total_data)
+		return result
 	
 	class Completer:
 		def __init__(self, dictionary):
@@ -146,12 +191,6 @@ class HumanWebserver:
 		        	return str(self.matching_words[index][0])
 		    except IndexError:
 				return None
-
-try:
-	humanServer = HumanWebserver(2000)
-	humanServer.start()
-except KeyboardInterrupt:
-	del humanServer
 
 
 

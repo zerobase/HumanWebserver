@@ -59,71 +59,41 @@ class HumanWebserver:
 		508: "Bandwith Limit Exceeded",
 		510: "Not Extended"
 	}
-<<<<<<< HEAD
-	
-	def __init__(self):		
-=======
 
-	def __init__(self, port):
-		try:
-			port = int(port)
-		except:
-			print (port, " ist kein gueltige Portnummer")
-			sys.exit(1)
-
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.bind(('', port))
-
->>>>>>> 21332bcc1994007def05320d907010441fe25790
-		completer = self.Completer(self.statusCodes)
-		readline.parse_and_bind("tab: complete")
-		readline.set_completer(completer.complete)
+	def __init__(self):
+		readline.set_completer(self.Completer(self.statusCodes).complete)
+		readline.parse_and_bind('tab: complete')
 
 	def __del__(self):
 		self.stop()
 
 	def stop(self):
-<<<<<<< HEAD
 		if self.socket != None:
 			self.socket.close()		
-	
+
 	def start(self, port):
 		try:
 			port = int(port)
 		except:
 			print (port, " ist kein gueltige Portnummer")
 			sys.exit(1)
-		
+
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.bind(('', port))
-		
-=======
-		self.socket.close()
 
-	def start(self):
->>>>>>> 21332bcc1994007def05320d907010441fe25790
 		print ("World's Fastest Web Server HumanWebserver started")
 		self.socket.listen(1)
 
 		try:
 			while 1:
 				conn, addr = self.socket.accept()
-<<<<<<< HEAD
 				cfile = conn.makefile("rw", 0)
-				
+
 				#print ("Verbindung von Host: ", addr[0], " port ", addr[1])
-				
+
 				data = self.recvall(conn)
 				print (bytes.decode(data))
-								
-=======
-				print ("Verbindung von Host: ", addr[0], " port ", addr[1])
-				data = conn.recv(4096)
-				if not data: break
 
-				print (bytes.decode(data))
-
->>>>>>> 21332bcc1994007def05320d907010441fe25790
 				while True:
 					status = raw_input("Respond with? ")
 					if status == "":
@@ -136,39 +106,18 @@ class HumanWebserver:
 							break;
 					except:
 						pass
-<<<<<<< HEAD
-						
-					print "%s ist kein gueltiger Status"%status					
-				
+
+					print "%s ist kein gueltiger Status"%status
+
 				cfile.write(self.content(self.responseFile, self.responseHttp%(status, self.statusCodes[status])))	
 				cfile.close()
 				conn.close()
-				
-=======
-					finally:
-						print "%s ist kein gueltiger Status"%status
-
-				f = open(self.responseFile, 'w')
-				f.write(self.responseHttp%(status, self.statusCodes[status]))
-				f.close()
-
-				p = subprocess.Popen("vim %s +" % self.responseFile, bufsize=2048, shell=True)
-				p.wait()
-
-				f = open(self.responseFile, 'r')
-				conn.send(f.read())	
-				conn.close()
-				f.close()
-
->>>>>>> 21332bcc1994007def05320d907010441fe25790
-				os.remove(self.responseFile)
 
 		except KeyboardInterrupt:
 			print("\nShutting down ...")
 		finally:
 			self.stop()
-<<<<<<< HEAD
-	
+
 	def content(self, path, default = ""):
 		f = open(path, 'w')
 		f.write(default)
@@ -178,12 +127,14 @@ class HumanWebserver:
 		p.wait()
 
 		f = open(path, 'r')
-		
+
 		content = f.read()
 		f.close()
-		
+		os.remove(path)
+
 		return content
 	
+	# http://code.activestate.com/recipes/213239-recvall-corollary-to-socketsendall/
 	def recvall(self, the_socket, timeout=''):
 		#setup to use non-blocking sockets
 		#if no data arrives it assumes transaction is done
@@ -191,10 +142,10 @@ class HumanWebserver:
 		the_socket.setblocking(0)
 		total_data=[];data=''
 		begin=time.time()
-		
+
 		if not timeout:
 			timeout=1
-			
+
 		while 1:
 			#if you got some data, then break after wait sec
 			if total_data and time.time()-begin>timeout:
@@ -214,14 +165,10 @@ class HumanWebserver:
 			except:
 				pass
 			#When a recv returns 0 bytes, other side has closed
-		
+
 		result=''.join(total_data)
 		return result
-	
-=======
 
-
->>>>>>> 21332bcc1994007def05320d907010441fe25790
 	class Completer:
 		def __init__(self, dictionary):
 			self.dictionary = dictionary
@@ -239,32 +186,3 @@ class HumanWebserver:
 					return str(self.matching_words[index][0])
 			except IndexError:
 				return None
-
-<<<<<<< HEAD
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
-try:
-	humanServer = HumanWebserver(2000)
-	humanServer.start()
-except KeyboardInterrupt:
-	del humanServer
->>>>>>> 21332bcc1994007def05320d907010441fe25790

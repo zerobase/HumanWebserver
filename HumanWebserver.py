@@ -2,6 +2,7 @@ import socket, sys, subprocess, os, select, socket, readline, time
 
 class HumanWebserver:
 	responseFile = os.getcwd() + "/response.txt"
+	responsesPath = os.getcwd() + "/responses/"
 	responseHttp = "HTTP/1.1 %d %s\r\nContent-Type: text/html\r\n\r\n\r\n"
 
 	statusCodes = {
@@ -61,8 +62,8 @@ class HumanWebserver:
 	}
 
 	def __init__(self):
-		readline.set_completer(self.Completer(self.statusCodes).complete)
-		readline.parse_and_bind('tab: complete')
+		readline.set_completer(self.Completer(self.statusCodes, self.responsesPath).complete)
+		readline.parse_and_bind('bind ^I rl_complete') #tab: complete
 
 	def __del__(self):
 		self.stop()
@@ -103,13 +104,17 @@ class HumanWebserver:
 						status = int(status)
 
 						if self.statusCodes.has_key(status):
-							break;
+							cfile.write(self.content(self.responseFile, self.responseHttp%(status, self.statusCodes[status])))
+							break;				
 					except:
-						pass
+						if status in os.listdir(self.responsesPath):
+							f = open(self.responsesPath + status, 'r')
+							response = f.read()							f.close()	
+							cfile.write(self.content(self.responsesPath + status, response))
+							break;
 
 					print "%s ist kein gueltiger Status"%status
-
-				cfile.write(self.content(self.responseFile, self.responseHttp%(status, self.statusCodes[status])))	
+	
 				cfile.close()
 				conn.close()
 
@@ -170,13 +175,14 @@ class HumanWebserver:
 		return result
 
 	class Completer:
-		def __init__(self, dictionary):
+		def __init__(self, dictionary, responsesPath):
 			self.dictionary = dictionary
 			self.prefix = None
+			self.responsesPath = responsesPath
 
 		def complete(self, prefix, index):
 			if prefix != self.prefix:
-				self.matching_words = [(k, v) for (k, v) in self.dictionary.items() if str(k).startswith(prefix)]
+				self.matching_words = [(k, v) for (k, v) in self.dictionary.items() if str(k).startswith(prefix)] + [(f, f) for f in os.listdir(self.responsesPath) if f.startswith(prefix)]
 				self.prefix = prefix
 
 			try:

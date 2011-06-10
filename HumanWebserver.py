@@ -64,6 +64,7 @@ class HumanWebserver:
 	def __init__(self):
 		readline.set_completer(self.Completer(self.statusCodes, self.responsesPath).complete)
 		readline.parse_and_bind('bind ^I rl_complete') #tab: complete
+		self.socket = None
 
 	def __del__(self):
 		self.stop()
@@ -82,7 +83,7 @@ class HumanWebserver:
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.bind(('', port))
 
-		print ("World's Fastest Web Server HumanWebserver started")
+		print ("World's Slowest Web Server HumanWebserver started")
 		self.socket.listen(1)
 
 		try:
@@ -110,7 +111,7 @@ class HumanWebserver:
 						if status in os.listdir(self.responsesPath):
 							f = open(self.responsesPath + status, 'r')
 							response = f.read()							f.close()	
-							cfile.write(self.content(self.responsesPath + status, response))
+							cfile.write(self.content(self.responsesPath + status, response, False))
 							break;
 
 					print "%s ist kein gueltiger Status"%status
@@ -123,7 +124,7 @@ class HumanWebserver:
 		finally:
 			self.stop()
 
-	def content(self, path, default = ""):
+	def content(self, path, default = "", deleteAfterwards = True):
 		f = open(path, 'w')
 		f.write(default)
 		f.close()
@@ -135,7 +136,9 @@ class HumanWebserver:
 
 		content = f.read()
 		f.close()
-		os.remove(path)
+		
+		if deleteAfterwards:
+			os.remove(path)
 
 		return content
 	

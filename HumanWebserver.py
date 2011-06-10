@@ -62,8 +62,10 @@ class HumanWebserver:
 	}
 
 	def __init__(self):
+		# initializes tab-auto-completion
 		readline.set_completer(self.Completer(self.statusCodes, self.responsesPath).complete)
-		readline.parse_and_bind('bind ^I rl_complete') #tab: complete
+		readline.parse_and_bind('bind ^I rl_complete') #for Mac
+		readline.parse_and_bind('tab: complete') # for Linux
 		self.socket = None
 
 	def __del__(self):
@@ -95,19 +97,20 @@ class HumanWebserver:
 
 				data = self.recvall(conn)
 				print (bytes.decode(data))
-
+				
+				# choose how to respond
 				while True:
 					status = raw_input("Respond with? ")
 					if status == "":
 						status = 200
 						break;
-					try:
+					try: # if status is of type int check if it is a valid status code
 						status = int(status)
 
 						if self.statusCodes.has_key(status):
 							cfile.write(self.content(self.responseFile, self.responseHttp%(status, self.statusCodes[status])))
 							break;				
-					except:
+					except: # else check for a template in subdir responses
 						if status in os.listdir(self.responsesPath):
 							f = open(self.responsesPath + status, 'r')
 							response = f.read()							f.close()	
@@ -123,7 +126,9 @@ class HumanWebserver:
 			print("\nShutting down ...")
 		finally:
 			self.stop()
-
+	
+	# open vim in a new process to modify response
+	# and wait until the created vim process terminates until responding
 	def content(self, path, default = "", deleteAfterwards = True):
 		f = open(path, 'w')
 		f.write(default)
@@ -176,7 +181,8 @@ class HumanWebserver:
 
 		result=''.join(total_data)
 		return result
-
+	
+	# complete status codes and predefined templates located in subfolder responses/
 	class Completer:
 		def __init__(self, dictionary, responsesPath):
 			self.dictionary = dictionary

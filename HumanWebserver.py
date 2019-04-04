@@ -96,7 +96,8 @@ class HumanWebserver:
 				#print ("Verbindung von Host: ", addr[0], " port ", addr[1])
 
 				data = self.recvall(conn)
-				print (bytes.decode(data))
+				print (bytes(data).decode(encoding='utf-8'))
+
 				
 				# choose how to respond
 				while True:
